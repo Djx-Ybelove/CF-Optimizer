@@ -1,0 +1,44 @@
+name: Build All-in-One EXE
+
+# 触发条件：推送到主分支 或 手动点击触发
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    steps:
+    # 1. 拉取代码 (包含你上传的 exe 和 python 脚本)
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # 2. 准备 Python 环境
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11' 
+        architecture: 'x64'
+
+    # 3. 安装 PyInstaller
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyinstaller
+
+    # 4. 开始构建 (直接调用 build.spec)
+    # 这一步会自动把仓库里的 cfst.exe 和 official_ips_domain 打包进去
+    - name: Build with PyInstaller
+      run: |
+        pyinstaller build.spec
+
+    # 5. 上传构建结果
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: CF-Optimizer-Windows-AMD64
+        # spec 配置的输出默认在 dist 文件夹下
+        path: dist/CF-Optimizer-Windows-AMD64.exe
+        retention-days: 90
